@@ -3,6 +3,7 @@ MAINTAINER feisuzhu@163.com
 ARG USE_MIRROR
 
 ENV TERM xterm
+RUN echo "199.232.28.133 githubusercontent.com" >> /etc/hosts
 ADD sources.list /etc/apt/sources.list
 RUN rm -f /etc/localtime && ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 RUN adduser ubuntu
