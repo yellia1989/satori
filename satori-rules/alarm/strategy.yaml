@@ -62,8 +62,7 @@ strategies:
   #   backend: opsgenie
   #   level: '01234'
 
-  indicator:
-    # do nothing, just consume the queue.
-    # BitBar plugin will poll api
-    backend: noop
+  dingding:
+    backend: dingding
     level: '0123456'
+    url: 'https://oapi.dingtalk.com/robot/send?access_token=5337731311a0037ef42127d429029c133ca43527f7a50266bf74d855d4f46007'

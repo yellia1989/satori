@@ -164,7 +164,7 @@ func (this *InfluxdbBackend) sendProc() {
 		influxdbItems := make([]*cmodel.MetricValue, 0, count)
 		for i := 0; i < count; i++ {
 			m := items[i].(*cmodel.MetricValue)
-			if m.Metric[0:7] == ".satori" {
+			if len(m.Metric) >= 7 && m.Metric[0:7] == ".satori" {
 				// skip internal events
 				continue
 			}

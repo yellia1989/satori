@@ -9,6 +9,7 @@ groups:
     - pagerduty_ops
     - zulip_ops
     - opsgenie_ops
+    - dingding_ops
 
 users:
   phone_ops:
@@ -41,3 +42,6 @@ users:
     level: '0123'
     channel: 'CHANNEL_NAME'
     topic: 'TOPIC_NAME'
+
+  dingding_ops:
+    name: "钉钉 机器人"

@@ -4,7 +4,8 @@
             [alarm :refer :all]
             [lib :refer :all]
             [hostgroup :refer :all]
-            [clojure.tools.logging :refer [info error]]))
+            [clojure.tools.logging :refer [info error]]
+            [clojure.string :as string]))
 
 (def infra-common-rules
   (sdo
@@ -13,7 +14,18 @@
       ;       report builtin metrics,
       ;       by doing this these config will not assign to agents in containers.
       (plugin-dir "infra")
-      (plugin "proc.num" 30 {:cmdline "^/usr/sbin/ntpd " :name "proc-ntpd"}))
+      (plugin "proc.num" 30 {:cmdline "ntpd" :name "proc-ntpd"})
+
+      (where (contains? event :apps)
+        ; 勇士2
+        (where #(string/includes? (:apps event) "herox")
+          (plugin "proc.num.mfwserver" 30 {:host "10.0.0.124" :port "3306" :user "herox" :pwd "herox12345" :db "db_tex"}))
+        ; 新三国
+        (where #(string/includes? (:apps event) "aqua")
+          (match :region "dev"
+            (plugin "proc.num.mfwserver" 30 {:host "172.19.248.171" :port "3306" :user "aqua" :pwd "aqua12345" :db "db_tex"}))
+          (match :region "youka"
+            (plugin "proc.num.mfwserver" 30 {:host "192.168.30.196" :port "3306" :user "aqua" :pwd "aqua12345" :db "db_tex"})))))
 
     (where (and (service "proc.num")
                 (= (:name event) "proc-ntpd"))
@@ -25,6 +37,35 @@
                 :expected 1.0
                 :groups [:operation]})))))
 
+    (where (and (service "proc.num")
+                (contains? event :app)
+                (contains? event :name))
+      (by [:region :app :name]
+        (judge (< 1)
+          (alarm-every 1 :min
+            (! {:note "进程不在了"
+                :level 5
+                :expected 1.0
+                :outstanding-tags [:region :app :name]
+                :groups [:operation]})))))
+
+    (where (service "stat.num")
+        prn)
+
+    (where (and (service "stat.num")
+                (or (= (:statid event) "shm_error")
+                    (= (:statid event) "db_error")
+                    (= (:statid event) "lua_error")
+                    (= (:statid event) "cheat")))
+      (by [:region :app :svr :statid]
+        (judge (> 0)
+          (alarm-every 1 :min
+            (! {:note "应用程序异常"
+                :level 4
+                :expected 0.0
+                :outstanding-tags [:region :app :svr :statid]
+                :groups [:operation]})))))
+    
     (where (service "mem.swaponfile")
       (by :host
         (judge (> 0)

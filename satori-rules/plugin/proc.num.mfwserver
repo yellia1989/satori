@@ -1,0 +1,93 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+
+# -- prioritized --
+import sys
+import os.path
+sys.path.append(os.path.join(os.path.dirname(__file__), './libs'))
+
+# -- stdlib --
+import json
+import os
+import re
+import socket
+import sys
+import time
+
+# -- third party --
+import pymysql
+
+# -- own --
+
+# -- code --
+ts = int(time.time())
+
+def get_host_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+    finally:
+        s.close()
+
+    return ip
+
+requested = json.loads(sys.stdin.read())
+#requested = [{"_metric": "proc.num.mfwserver", "_step": 30, "host":"192.168.0.7", "port":"3006", "user":"dev", "pwd":"777777", "db":"herox_db_tex"}]
+
+servers = []
+for p in requested:
+    assert p["_metric"] == "proc.num.mfwserver"
+    step = int(p["_step"])
+
+    # Connect to the database
+    connection = pymysql.connect(host=p["host"],
+                             user=p["user"],
+                             password=p['pwd'],
+                             db=p['db'],
+                             cursorclass=pymysql.cursors.DictCursor)
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "SELECT `app`,`server`,`division` FROM `t_server` WHERE node=%s"
+            cursor.execute(sql, (get_host_ip()))
+            rows = cursor.fetchall()
+            for row in rows:
+                cmdline = '/data/app/' + row['app']
+                name = ''
+                if row['division'] != '':
+                    cmdline += '/'+ row['division']
+                    name += row['division'] + '/'
+                cmdline += '/'+row['server']
+                name += row['server']
+                servers.append({'cmdline':cmdline,'app':row['app'],'name':name})
+    finally:
+        connection.close()
+
+cmdlines = []
+pids = [i for i in os.listdir('/proc') if i.isdigit()]
+for i in pids:
+    try:
+        l = open("/proc/%s/cmdline" % i).read().replace('\0', ' ').strip()
+        if l.find("/data/app") != -1:
+            cmdlines.append(l)
+    except Exception:
+        pass
+
+metrics = []
+for s in servers:
+    metric = {
+        "metric": 'proc.num',
+        "timestamp": ts,
+        "step": step,
+        "value": 0,
+        "tags": {"app": s['app'], "name": s['name']}
+    }
+    for cmd in cmdlines:
+        if cmd.find(s['cmdline']) != -1:
+            metric['value'] = 1
+            break
+    metrics.append(metric)
+
+print json.dumps(metrics)

@@ -47,7 +47,7 @@ def cook_event(ev):
 
     final.extend(list(ev['tags'].items()))
 
-    ev['text'] = '\n'.join(["%s: %s" % (k, v) for k, v in final])
+    ev['text'] = '\n'.join(["%s: %s\n" % (k, v) for k, v in final])
 
     desc = ev.get('description')
     if desc:

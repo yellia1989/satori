@@ -74,11 +74,11 @@ plugin:
   # Git remote path for rules repository
   git: "http://satori:PASSWD@DOMAIN/plugin"
   # Local path for checked-out rules repository
-  checkoutPath: "/var/lib/satori/plugin"
+  checkoutPath: "/data/satori/plugin"
   # Plugin directory in rules repository
   subDir: plugin
   # Where to put plugin logs
-  logs: "/var/log/satori"
+  logs: "/data/satori/log"
 
 # Master address
 master: "master://INTERNAL_DOMAIN:6040/?interval=60&timeout=5000"
