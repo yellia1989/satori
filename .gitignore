@@ -8,4 +8,5 @@ satori-transfer
 satori/docker-compose.yml
 satori/images/*/.build
 agent-cfg.yaml
+satori-install.sh
 __pycache__
